@@ -4,7 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 /**
  * Home controller - realete with the main page
  *
- * This file is main controll of main page TIN project 
+ * This file is main controll of main page TIN project
  * @author Suphanut Thanyaboon <suphanut@gmail.com>
  * @version 0.0.1
  *
@@ -17,32 +17,61 @@ class Home extends CI_Controller {
         $this->load->model('home_model');
         $this->load->library('form_validation');
         $this->load->Model('Auth_model');
-        $this->load->Model('Week');
-        $this->load->Model('People');
-        $this->load->Model('Prize');
-		
+        $this->load->Model('Student');
+        $this->load->Model('Car');
+        $this->load->Model('Parents');
+
 	}
 	/**
  	 * index page show on default
      */
 	public function index() {
-		$data['title'] = "บันทึการเฝ้าเดี่ยวแห่งคริสตจักรพันธสัญญากรุงเทพ";
+		$data['title'] = "บันทึกข้อมูลของนักเรียน";
 
-        //check user logged in or not
-        $this->Auth_model->isLoggedIn();
-	    $week = $this->Week->getWeek();
-		$data['week'] = $week; 
+    //check user logged in or not
+    $this->Auth_model->isLoggedIn();
+
+		//get username detail
+		$data['fullname'] = $this->session->userdata('firstname')." ".$this->session->userdata('lastname');
+
+		$userdetail = $this->Parents->getParentById($this->session->userdata('userid'));
+		$data['userdetail'] = $userdetail;
+
+		//get student name
+	  $data['students'] = $this->Student->getParentStduent($this->session->userdata('userid'));
+
+		//get user cars
+		$data['usercars'] = $this->Car->getUserCars($this->session->userdata('userid'));
+
+		//get Default car
+		$data['defaultcar'] = $this->Car->getCarByID($userdetail->Default_Car_ID);
+
+		$this->load->view('header',$data);
 		$this->load->view('home',$data);
-        
+		$this->load->view('footer',$data);
+
+	}
+
+	/***
+	 * find the status of student and synchronize to mobile app
+	 */
+
+	public function studentchecked($userid)
+	{
+
+		//find the status of student
+
+		//return status to mobile app
+		echo "1";
 	}
 
         public function fillgrid(){
 		    $week = $this->Week->getWeek();
-			$data['week'] = $week; 
+			$data['week'] = $week;
             $this->home_model->fillgrid($week->week_start,$week->week_end);
         }
- 
- 
+
+
         public function create(){
             $this->form_validation->set_rules('name', 'Name', 'required');
             //$this->form_validation->set_rules('email', 'Email', 'required|valid_email');
@@ -55,7 +84,7 @@ class Home extends CI_Controller {
                 $this->home_model->create();
             }
         }
-         
+
         public function edit(){
             $id =  $this->uri->segment(3);
             $this->db->where('id',$id);
@@ -63,7 +92,7 @@ class Home extends CI_Controller {
             $data['id'] = $id;
             $this->load->view('edit', $data);
             }
-             
+
         public function update(){
                 $res['error']="";
                 $res['success']="";
@@ -71,8 +100,8 @@ class Home extends CI_Controller {
                 //$this->form_validation->set_rules('email', 'Email', 'required|valid_email');
                 //$this->form_validation->set_rules('contact', 'Contact Number', 'required|numeric|max_length[10]|min_length[10]');
                 if ($this->form_validation->run() == FALSE){
-                $res['error']='<div class="alert alert-danger">'.validation_errors().'</div>';    
-                }           
+                $res['error']='<div class="alert alert-danger">'.validation_errors().'</div>';
+                }
             else{
                 $data = array('name'=>  $this->input->post('name'),
                 'email'=>$this->input->post('email'),
@@ -86,8 +115,8 @@ class Home extends CI_Controller {
             echo json_encode($res);
             exit;
         }
- 
- 
+
+
         public function delete(){
             $id =  $this->input->POST('id');
             $this->db->where('id', $id);
@@ -96,305 +125,6 @@ class Home extends CI_Controller {
             exit;
         }
 
-		public function fortune() {
-
-			// find current week  id
-			$week = $this->Week->getWeek();
-
-			// get days of last 
-			$lastweek = $this->Week->getWeekByID($week->week_id-1);
-			$data['week'] = $lastweek; 
-
-			//get people who already get prize in this week
-			$peoplewon = $this->Prize->getWeekPrize();
-			//$data['peoplewons'] = $peoplewon;
-            //do_dump($data['peoplewons']);
-
-			//make string exception for prize
-
-            //get group probability
-
-            $hitCards = array();
-            $hitCards[0] = array( 'group' => 'MPSF', 'rate' => 15);
-            $hitCards[1] = array( 'group' => 'MPP', 'rate' => 15);
-            $hitCards[2] = array( 'group' => 'SENIOR', 'rate' => 15);
-            $hitCards[3] = array( 'group' => 'NEXT', 'rate' => 15);
-            $hitCards[4] = array( 'group' => 'YT', 'rate' => 15);
-            $hitCards[5] = array( 'group' => 'WS', 'rate' => 0);
-            $hitCards[6] = array( 'group' => 'KID', 'rate' => 0);
-            $hitCards[7] = array( 'group' => 'EP', 'rate' => 15);
-
-			$exceptids = "";
-			$lastarray = end($peoplewon);
-			foreach ($peoplewon as $peoplew) {
-
-				$exceptids .= $peoplew->id;
-			    if ($lastarray->id != $peoplew->id) {
-					$exceptids .= ",";
-				} 
-
-                foreach ($hitCards as $key => $value) {
-                    if ($value['group'] == $peoplew->mission) {
-                        $hitCards[$key]['rate'] -= 14;
-                    } else {
-                        $hitCards[$key]['rate'] += 1;
-                    }
-                }
-			}
-            $hitCards[5] = array( 'group' => 'WS', 'rate' => 0);
-            $hitCards[6] = array( 'group' => 'KID', 'rate' => 0);
-
-            //do_dump($hitCards,'hitCards');
-            $total = 0;
-            $hits = array();
-            $data = array();
-
-            foreach ($hitCards as $key => $value) {
-
-                $total  = $total + $value['rate'];
-                $hits[] = $value['rate'];
-                $data[] = $value;
-            }
-
-            $from = 0;
-            $to   = 0;
-            $n = round(rand(1,$total) );
-
-            for ($i = 0; $i <= count($hits); $i++) {
-
-                $from = $to;
-                $to += $hits[$i];
-                if ( $from < $n && $n <= $to ) {
-
-                    $lotCard = $data[$i];
-                        break;
-                }
-            }
-
-            //do_dump($lotCard,'lotCard');
-
-			//get people who already get prize in this week
-			$data['peoplewons'] = $this->Prize->getWeekPrize();
-
-            //generate random percentage of group
-
-            cake_log($lotCard['group'],"group");
-			//$data['people'] = $this->People->getPrizeByWeek('2016-02-28', '2016-03-04');
-			$won = $this->People->getPrizeByWeek($lastweek->week_start, $lastweek->week_end, 0, $exceptids, $lotCard['group']);
-			$data['people'] = $won;
-			//do_dump($data['peoples']);
-			// insert people to prize hall
-			$this->Prize->recordPrize($won->id, $won->name, $won->email);
-
-			
-			$this->load->view('prize',$data);
-
-		}
-
-		public function fortunethree() {
-
-			// find current week  id
-			$week = $this->Week->getWeek();
-
-			// get days of last 
-			$lastweek = $this->Week->getWeekByID($week->week_id-1);
-			$data['week'] = $lastweek; 
-
-			//get people who already get prize in this week
-			$peoplewon = $this->Prize->getWeekPrize();
-			//$data['peoplewons'] = $peoplewon;
-            //do_dump($data['peoplewons']);
-
-			//make string exception for prize
-
-            //get group probability
-
-            $hitCards = array();
-            $hitCards[0] = array( 'group' => 'MPSF', 'rate' => 15);
-            $hitCards[1] = array( 'group' => 'MPP', 'rate' => 15);
-            $hitCards[2] = array( 'group' => 'SENIOR', 'rate' => 15);
-            $hitCards[3] = array( 'group' => 'NEXT', 'rate' => 0);
-            $hitCards[4] = array( 'group' => 'YT', 'rate' => 15);
-            $hitCards[5] = array( 'group' => 'WS', 'rate' => 15);
-            $hitCards[6] = array( 'group' => 'KID', 'rate' => 0);
-            $hitCards[7] = array( 'group' => 'EP', 'rate' => 15);
-
-            // create who get price list
-			$exceptids = "";
-			$lastarray = end($peoplewon);
-			foreach ($peoplewon as $peoplew) {
-
-				$exceptids .= "'".$peoplew->name."'";
-			    if ($lastarray->name != $peoplew->name) {
-					$exceptids .= ",";
-				} 
-
-                foreach ($hitCards as $key => $value) {
-                    if ($value['group'] == $peoplew->mission) {
-                        $hitCards[$key]['rate'] -= 14;
-                    } else {
-                        $hitCards[$key]['rate'] += 1;
-                    }
-                }
-			}
-            $hitCards[3] = array( 'group' => 'NEXT', 'rate' => 0);
-            $hitCards[6] = array( 'group' => 'KID', 'rate' => 0);
-
-            //do_dump($hitCards,'hitCards');
-            $total = 0;
-            $hits = array();
-            $data = array();
-
-            foreach ($hitCards as $key => $value) {
-
-                $total  = $total + $value['rate'];
-                $hits[] = $value['rate'];
-                $data[] = $value;
-            }
-
-            $from = 0;
-            $to   = 0;
-            $n = round(rand(1,$total) );
-
-            for ($i = 0; $i <= count($hits); $i++) {
-
-                $from = $to;
-                $to += $hits[$i];
-                if ( $from < $n && $n <= $to ) {
-
-                    $lotCard = $data[$i];
-                        break;
-                }
-            }
-
-            //do_dump($lotCard,'lotCard');
-
-			//get people who already get prize in this week
-			$data['peoplewons'] = $this->Prize->getWeekPrize();
-
-            //generate random percentage of group
-
-            cake_log($lotCard['group'],"group");
-			//$data['people'] = $this->People->getPrizeByWeek('2016-02-28', '2016-03-04');
-			//$won = $this->People->getPrizeByWeek($lastweek->week_start, $lastweek->week_end, 0, $exceptids, $lotCard['group']);
-			//$won = $this->People->getPrizeBy3Months('2016-06-15 00:00:00', '2016-08-13 23:59:59', 0, $exceptids, $lotCard['group']);
-			$won = $this->People->getPrizeBy3Months('2016-08-14 00:00:00', '2016-11-13 23:59:59', 0, $exceptids, $lotCard['group']);
-			$data['people'] = $won;
-			//do_dump($data['peoples']);
-			// insert people to prize hall
-			$this->Prize->recordPrize($won->id, $won->name, $won->email);
-
-			
-			$this->load->view('prizethree',$data);
-
-		}
-
-		/*public function fortunethree() {
-
-			// find current week  id
-			$week = $this->Week->getWeek();
-
-			// get days of last 
-			//$lastweek = $this->Week->getWeekByID($week->week_id-1);
-			//$data['week'] = $lastweek; 
-
-			//get people who already get prize in this week
-			$peoplewon = $this->Prize->getWeekPrize();
-			$data['peoplewons'] = $peoplewon;
-
-			//make string exception for prize
-			$exceptids = "";
-			$lastarray = end($peoplewon);
-			foreach ($peoplewon as $peoplew) {
-
-				$exceptids .= $peoplew->id;
-			    if ($lastarray->id != $peoplew->id) {
-					$exceptids .= ",";
-				} 
-			}
-
-			//$data['people'] = $this->People->getPrizeByWeek('2016-02-28', '2016-03-04');
-			//$won = $this->People->getPrizeBy3Months('2016-03-03 00:00:00', '2016-05-14 23:59:59', 0, $exceptids);
-			$won = $this->People->getPrizeBy3Months('2016-06-15 00:00:00', '2016-08-13 23:59:59', 0, $exceptids);
-			$data['people'] = $won;
-			//do_dump($data['peoples']);
-			// insert people to prize hall
-			if ($won->id != 0) 
-				$this->Prize->recordPrize($won->id, $won->name, $won->email);
-
-			
-			$this->load->view('prizethree',$data);
-
-		}
-         */
-
-		/***
-		  *	Show statistic of devotion and ready to random
-		  *
-		  */
-		public function p() {
-
-			// find current week  id
-			$week = $this->Week->getWeek();
-
-			//get people who already get prize in this week
-			$peoplewon = $this->Prize->getWeekPrize();
-			$data['peoplewons'] = $peoplewon;
-
-			// get days of last 
-			$lastweek = $this->Week->getWeekByID($week->week_id-1);
-			$data['week'] = $lastweek; 
-
-			$data['weekcounts'] = $this->People->countGroupByWeek($lastweek->week_start, $lastweek->week_end, 0 );
-			//find amount of people in week by group	
-
-			$this->load->view('preprize',$data);
-		}
-
-		/***
-		  *	Show statistic of devotion and ready to random
-		  *
-		  */
-		public function pthree() {
-
-			// find current week  id
-			$week = $this->Week->getWeek();
-
-			//get people who already get prize in this week
-			$peoplewon = $this->Prize->getWeekPrize();
-			$data['peoplewons'] = $peoplewon;
-
-			// get days of last 
-			$lastweek = $this->Week->getWeekByID($week->week_id-1);
-			$data['week'] = $lastweek; 
-
-			// count people who has chnage for 3 months
-			//$data['weekcounts'] = $this->People->countGroupByWeek($lastweek->week_start, $lastweek->week_end, 0 );
-			//$data['weekcounts'] = $this->People->countGroupBy3Months('2016-03-03 00:00:00', '2016-05-14 23:59:59', 0 );
-			//$data['weekcounts'] = $this->People->countGroupBy3Months('2016-05-15 00:00:00', '2016-08-13 23:59:59', 0 );
-			$data['weekcounts'] = $this->People->countGroupBy3Months('2016-08-14 00:00:00', '2016-11-13 23:59:59', 0 );
-			//find amount of people in week by group	
-
-			$this->load->view('prethreeprize',$data);
-		}
-
-		public function clear() {
-
-			$this->Prize->clearPrize();
-
-			$this->p();
-
-		}
-
-		public function clearthree() {
-
-			$this->Prize->clearPrize();
-
-			$this->pthree();
-
-		}
-         
-         
 
 		public function search_jquery_autocomplete() {
           $arr=array();
@@ -406,10 +136,10 @@ class Home extends CI_Controller {
                   $this->db->like("name",$name)->select('name'); //ให้แสดงชื่อสีอะไรก็ตาม ที่มีคำคล้ายกับตัวอักษรที่ส่งมา
             $result=$this->db->from("curd")->get()->result();
           }
- 
+
           foreach($result as $key){
                 $arr[]=$key->name;//จากนั้นก็นำสีมา เข้ารหัสแบบ json
           }
           echo $_GET['callback']."(".json_encode($arr).")";   //แล้วก็ส่งค่ามันกลับไป
-		}       			
+		}
 }

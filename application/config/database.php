@@ -78,7 +78,7 @@ $db['default'] = array(
 	'hostname' => 'localhost',
 	'username' => 'root',
 	'password' => 'password',
-	'database' => 'seasonpop',
+	'database' => 'etm',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => TRUE,
@@ -94,5 +94,5 @@ $db['default'] = array(
 	'failover' => array(),
 	'save_queries' => TRUE,
 	'autoinit' => TRUE,
-	
+
 );
