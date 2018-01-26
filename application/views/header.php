@@ -134,7 +134,7 @@
               <li class="icon-link">
                 <a href="/"><i class="fa fa-home"></i></a>
               </li>
-              <li><a href="#">เพิ่มข้อมูลทะเบียน</a></li>
+              <li><a href="/home/addplate/<?php echo $this->session->userdata('userid'); ?>">เพิ่มข้อมูลทะเบียน</a></li>
               <li><a href="#">เพิ่มข้อมูลนักเรียน</a></li>
               <li><a href="#">ดูรายการย้อนหลัง</a></li>
               <li><a href="/auth/logout">ออกจากระบบ</a></li>

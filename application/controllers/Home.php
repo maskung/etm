@@ -12,6 +12,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Home extends CI_Controller {
 
+	var $fullname = '';
+
 	public function __construct(){
 		parent::__construct();
         $this->load->model('home_model');
@@ -20,6 +22,9 @@ class Home extends CI_Controller {
         $this->load->Model('Student');
         $this->load->Model('Car');
         $this->load->Model('Parents');
+
+		    $this->fullname = $this->session->userdata('firstname')." ".$this->session->userdata('lastname');
+
 
 	}
 	/**
@@ -32,7 +37,8 @@ class Home extends CI_Controller {
     $this->Auth_model->isLoggedIn();
 
 		//get username detail
-		$data['fullname'] = $this->session->userdata('firstname')." ".$this->session->userdata('lastname');
+
+		$data['fullname'] = $this->fullname;
 
 		$userdetail = $this->Parents->getParentById($this->session->userdata('userid'));
 		$data['userdetail'] = $userdetail;
@@ -58,18 +64,56 @@ class Home extends CI_Controller {
 
 	public function studentchecked($userid)
 	{
-
 		//find the status of student
 
 		//return status to mobile app
 		echo "1";
 	}
 
-        public function fillgrid(){
-		    $week = $this->Week->getWeek();
-			$data['week'] = $week;
-            $this->home_model->fillgrid($week->week_start,$week->week_end);
-        }
+	public function addplate($userid)
+	{
+		$data['title'] = "เพิ่มทะเบียนรถในระบบ";
+		$data['fullname'] = $this->fullname;
+
+		//get user detail
+		$userdetail = $this->Parents->getParentById($this->session->userdata('userid'));
+		$data['userdetail'] = $userdetail;
+
+		//get user cars
+		$data['usercars'] = $this->Car->getUserCars($this->session->userdata('userid'));
+
+		//get Default car
+		$data['defaultcar'] = $this->Car->getCarByID($userdetail->Default_Car_ID);
+
+		$this->load->view('header',$data);
+		$this->load->view('addplate',$data);
+		$this->load->view('footer',$data);
+	}
+
+	public function addplateprocess()
+	{
+		 //get prepare data for add
+		 $data = array(
+			 'Brand' => $_POST['brandcar'],
+			 'Color' => $_POST['colorcar'],
+			 'Text' => $_POST['plate'],
+			 'Parent_ID' => $this->session->userdata('userid'),
+		 );
+
+		 $this->Car->insertCar($data);
+
+		 redirect ('/home/addplate/'.$this->session->userdata('userid'));
+
+	}
+
+
+
+
+  public function fillgrid(){
+	   $week = $this->Week->getWeek();
+		$data['week'] = $week;
+    $this->home_model->fillgrid($week->week_start,$week->week_end);
+   }
 
 
         public function create(){

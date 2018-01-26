@@ -63,15 +63,15 @@
             success:function(data){
               // change color status of cone
               if (data == 1) {
-                console.log('ready');
+                //console.log('ready');
                 $('#cone-pic').attr('src', '/assets/img/traffic_cone_light_green.png');
                 $('#traffic-text').html('นักเรียนพร้อมแล้ว');
                 $('#traffic-text').css('color','#3c763d');
               } else {
-                console.log('not yet');
+                //console.log('not yet');
                 $('#cone-pic').attr('src', '/assets/img/traffic_cone_light_red.png');
                 $('#traffic-text').html('นักเรียนยังไม่พร้อม');
-                $('#traffic-text').css('color','#faa');
+                $('#traffic-text').css('color','#e82e0e');
               }
             }
           });
